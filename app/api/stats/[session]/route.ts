@@ -26,14 +26,13 @@ function verdict(total: number, avgDur: number | null, avgGap: number | null, va
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { session: string } }
+  { params }: { params: Promise<{ session: string }> }
 ) {
-  // autenticação via cookie de sessão do dashboard
   const auth = req.cookies.get('dashboard_auth')?.value
   if (auth !== process.env.DASHBOARD_PASSWORD)
     return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
 
-  const { session } = params
+  const { session } = await params
   const rawEvents = await redis.lrange<string>(`session:${session}:events`, 0, -1)
   const meta      = await redis.get<any>(`session:${session}:meta`)
 
