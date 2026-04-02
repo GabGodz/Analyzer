@@ -1,0 +1,44 @@
+=== Loader Enigma FINAL ===
+Pasta: C:\Users\Hatedyz\Downloads
+DLL: C:\Users\Hatedyz\Downloads\teste.dll
+DLL encontrada ✓
+Abrindo Transformice.exe...
+Aguardando 4 segundos para extração completa...
+=== Buscando processo do jogo (.tmp ou Transformice) ===
+✓ PROCESSO ENCONTRADO! PID: 21608
+RemoteThread criada - Aguardando DLL carregar...
+✅ INJEÇÃO FINALIZADA!
+Loader finalizado
+=== Loader Enigma FINAL ===
+Pasta: C:\Users\Hatedyz\Downloads
+DLL: C:\Users\Hatedyz\Downloads\teste.dll
+DLL encontrada ✓
+Abrindo Transformice.exe...
+Aguardando 4 segundos para extração completa...
+=== Buscando processo do jogo (.tmp ou Transformice) ===
+✓ PROCESSO ENCONTRADO! PID: 3096
+RemoteThread criada - Aguardando DLL carregar...
+✅ INJEÇÃO FINALIZADA!
+Loader finalizado
+=== Loader Enigma FINAL ===
+Pasta: C:\Users\Hatedyz\Downloads
+DLL: C:\Users\Hatedyz\Downloads\teste.dll
+DLL encontrada ✓
+Abrindo Transformice.exe...
+Aguardando 4 segundos para extração completa...
+=== Buscando processo do jogo (.tmp ou Transformice) ===
+✓ PROCESSO ENCONTRADO! PID: 1924
+RemoteThread criada - Aguardando DLL carregar...
+✅ INJEÇÃO FINALIZADA!
+Loader finalizado
+=== Loader Enigma FINAL ===
+Pasta: C:\Users\Hatedyz\Downloads
+DLL: C:\Users\Hatedyz\Downloads\teste.dll
+DLL encontrada ✓
+Abrindo Transformice.exe...
+Aguardando 4 segundos para extração completa...
+=== Buscando processo do jogo (.tmp ou Transformice) ===
+✓ PROCESSO ENCONTRADO! PID: 5152
+RemoteThread criada - Aguardando DLL carregar...
+✅ INJEÇÃO FINALIZADA!
+Loader finalizado
