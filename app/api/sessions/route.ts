@@ -1,7 +1,5 @@
-import { Redis } from '@upstash/redis'
+import { redis } from '@/app/lib/redis'
 import { NextRequest, NextResponse } from 'next/server'
-
-const redis = Redis.fromEnv()
 
 function isAuthed(req: NextRequest) {
   return req.cookies.get('auth')?.value === process.env.DASHBOARD_PASSWORD
