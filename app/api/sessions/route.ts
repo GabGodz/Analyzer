@@ -8,7 +8,7 @@ export async function GET(req: NextRequest) {
   if (auth !== process.env.DASHBOARD_PASSWORD)
     return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
 
-  const sessions = await redis.zrange<string>('sessions', 0, -1, { rev: true }) as string[]
+  const sessions = (await redis.zrange('sessions', 0, -1, { rev: true })) as unknown as string[]
   const top50 = sessions.slice(0, 50)
 
   const metas = await Promise.all(
