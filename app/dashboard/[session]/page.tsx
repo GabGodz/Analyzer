@@ -29,11 +29,11 @@ function classify(dur: number | null, gap: number | null) {
 }
 
 const VERDICTS: Record<string, { icon: string; text: string; color: string }> = {
-  macro:        { icon: '⚠', color: 'var(--red)',   text: 'Alta probabilidade de MACRO — hold muito curto + intervalos rígidos.' },
-  suspect:      { icon: '⚡', color: 'var(--amber)', text: 'Suspeito — padrões sugerem automação. Colete mais amostras.' },
+  macro:        { icon: '⚠', color: 'var(--red)',   text: 'Alta probabilidade de MACRO — hold muito curto.' },
+  suspect:      { icon: '⚡', color: 'var(--amber)', text: 'Suspeito — padrões sugerem automação.' },
   human:        { icon: '✓', color: 'var(--green)', text: 'Padrão humano — variância alta e hold natural.' },
   inconclusive: { icon: '?', color: 'var(--muted)', text: 'Inconclusivo — continue monitorando.' },
-  waiting:      { icon: '⏳', color: 'var(--muted)', text: 'Aguardando amostras (mín. 5 teclas)...' },
+  waiting:      { icon: '⏳', color: 'var(--muted)', text: 'Aguardando amostras...' },
 }
 
 function valColor(val: number | null, low: number, mid: number): string {
