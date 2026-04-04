@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'Macro Analyzer',
+  title: 'Keyboard Analyzer',
 }
 
 const css = `
