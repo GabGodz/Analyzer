@@ -34,11 +34,17 @@ export default function DashboardPage() {
 
   const load = useCallback(async (showRefresh = false) => {
     if (showRefresh) setRefreshing(true)
-    const res = await fetch('/api/sessions')
-    if (res.status === 401) { router.push('/'); return }
-    setSessions(await res.json())
-    setLoading(false)
-    if (showRefresh) setTimeout(() => setRefreshing(false), 400)
+    try {
+      const res = await fetch('/api/sessions')
+      if (res.status === 401) { router.push('/'); return }
+      const data = await res.json()
+      setSessions(Array.isArray(data) ? data : [])
+    } catch {
+      setSessions([])
+    } finally {
+      setLoading(false)
+      if (showRefresh) setTimeout(() => setRefreshing(false), 400)
+    }
   }, [router])
 
   useEffect(() => { load() }, [load])
@@ -74,6 +80,9 @@ export default function DashboardPage() {
             </div>
           </div>
           <div style={{ display: 'flex', gap: 8 }}>
+            <Link href="/dashboard/integrity" style={{ ...btnStyle, textDecoration: 'none', display: 'inline-flex', alignItems: 'center' }}>
+              SHA-256
+            </Link>
             <button
               onClick={() => load(true)}
               disabled={refreshing}
