@@ -143,8 +143,7 @@ export default function IntegrityPage() {
             Na primeira execução do GodEyeV4.exe em uma máquina, o SHA-256 do executável é registrado aqui vinculado ao HWID do usuário.
             Nas execuções seguintes, o hash calculado é comparado com o registrado — se divergir, uma notificação é enviada ao Discord e o programa é encerrado.
             <br /><br />
-            Para distribuir uma atualização do GodEyeV4.exe, clique em <strong>Resetar hash</strong> para o HWID desejado.
-            Na próxima execução, o novo hash será registrado automaticamente.
+            Só clique em reset se eu lançar uma atualização do godeye.
           </div>
         </div>
       </div>
