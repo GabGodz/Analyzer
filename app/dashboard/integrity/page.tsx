@@ -3,64 +3,52 @@ import { useEffect, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 
-type SessionMeta = {
-  session: string
-  started: number
-  last_seen: number
+type IntegrityRecord = {
+  hwid: string
+  hash: string
+  registered: number
 }
+
+const css = `
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @keyframes fadeIn { from { opacity:0; transform:translateY(4px); } to { opacity:1; transform:translateY(0); } }
+  .row-in { animation: fadeIn .18s ease both; }
+  .spin { animation: spin .7s linear infinite; display: inline-block; }
+`
 
 function fmt(ts: number) {
   return new Date(ts).toLocaleString('pt-BR')
 }
 
-const css = `
-  @keyframes spin { to { transform: rotate(360deg); } }
-  @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
-  @keyframes blink { 0%,100% { opacity: 1; } 50% { opacity: 0.2; } }
-  @keyframes pulse-dot { 0%,100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.5); opacity: 0.4; } }
-  .row-in { animation: fadeIn 0.2s ease both; }
-  .spin { animation: spin 0.7s linear infinite; display: inline-block; }
-  .blink { animation: blink 1.2s ease infinite; }
-`
-
-export default function DashboardPage() {
-  const [sessions, setSessions]     = useState<SessionMeta[]>([])
-  const [loading, setLoading]       = useState(true)
+export default function IntegrityPage() {
+  const [records, setRecords]     = useState<IntegrityRecord[]>([])
+  const [loading, setLoading]     = useState(true)
+  const [resetting, setResetting] = useState<string | null>(null)
+  const [confirm, setConfirm]     = useState<string | null>(null)
   const [refreshing, setRefreshing] = useState(false)
-  const [loggingOut, setLoggingOut] = useState(false)
-  const [deleting, setDeleting]     = useState<string | null>(null)
-  const [confirmDel, setConfirmDel] = useState<string | null>(null)
   const router = useRouter()
 
-  const load = useCallback(async (showRefresh = false) => {
-    if (showRefresh) setRefreshing(true)
+  const load = useCallback(async (showSpin = false) => {
+    if (showSpin) setRefreshing(true)
     try {
-      const res = await fetch('/api/sessions')
+      const res = await fetch('/api/integrity-list')
       if (res.status === 401) { router.push('/'); return }
-      const data = await res.json()
-      setSessions(Array.isArray(data) ? data : [])
-    } catch {
-      setSessions([])
-    } finally {
+      setRecords(await res.json())
+    } catch { setRecords([]) }
+    finally {
       setLoading(false)
-      if (showRefresh) setTimeout(() => setRefreshing(false), 400)
+      if (showSpin) setTimeout(() => setRefreshing(false), 400)
     }
   }, [router])
 
   useEffect(() => { load() }, [load])
 
-  async function logout() {
-    setLoggingOut(true)
-    await fetch('/api/login', { method: 'DELETE' })
-    router.push('/')
-  }
-
-  async function deleteSession(session: string) {
-    setDeleting(session)
-    await fetch(`/api/delete/${session}`, { method: 'DELETE' })
-    setSessions(prev => prev.filter(s => s.session !== session))
-    setDeleting(null)
-    setConfirmDel(null)
+  async function resetHash(hwid: string) {
+    setResetting(hwid)
+    await fetch(`/api/integrity/${encodeURIComponent(hwid)}`, { method: 'DELETE' })
+    setRecords(prev => prev.filter(r => r.hwid !== hwid))
+    setResetting(null)
+    setConfirm(null)
   }
 
   return (
@@ -70,116 +58,94 @@ export default function DashboardPage() {
 
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
           <div>
-            <div style={{ color: 'var(--blue)', fontWeight: 700, fontSize: 15, letterSpacing: '.06em' }}>
-              MACRO ANALYZER
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <Link href="/dashboard" style={{ color: 'var(--muted)', fontSize: 12 }}>← Sessões</Link>
+              <div style={{ color: 'var(--blue)', fontWeight: 700, fontSize: 15, letterSpacing: '.06em' }}>
+                INTEGRIDADE SHA-256
+              </div>
             </div>
-            <div style={{ color: 'var(--muted)', fontSize: 11 }}>
-              {loading
-                ? <span className="blink">carregando...</span>
-                : `${sessions.length} sessões registradas`}
+            <div style={{ color: 'var(--muted)', fontSize: 11, marginTop: 2 }}>
+              {loading ? 'carregando...' : `${records.length} HWIDs registrados`}
             </div>
           </div>
-          <div style={{ display: 'flex', gap: 8 }}>
-            <Link href="/dashboard/integrity" style={{ ...btnStyle, textDecoration: 'none', display: 'inline-flex', alignItems: 'center' }}>
-              SHA-256
-            </Link>
-            <button
-              onClick={() => load(true)}
-              disabled={refreshing}
-              style={{ ...btnStyle, minWidth: 108, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
-            >
-              <span className={refreshing ? 'spin' : ''} style={{ fontSize: 14, lineHeight: 1 }}>↻</span>
-              {refreshing ? 'Atualizando' : 'Atualizar'}
-            </button>
-            <button
-              onClick={logout}
-              disabled={loggingOut}
-              style={{ ...btnStyle, minWidth: 72, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
-            >
-              {loggingOut ? <><span className="spin" style={{ fontSize: 11 }}>↻</span> Saindo</> : 'Sair'}
-            </button>
-          </div>
+          <button
+            onClick={() => load(true)}
+            disabled={refreshing}
+            style={{ ...btnStyle, display: 'flex', alignItems: 'center', gap: 6, minWidth: 108 }}
+          >
+            <span className={refreshing ? 'spin' : ''} style={{ fontSize: 14 }}>↻</span>
+            {refreshing ? 'Atualizando' : 'Atualizar'}
+          </button>
         </div>
 
-        <div style={{ background: 'var(--panel)', border: '0.5px solid var(--border)', borderRadius: 10, overflow: 'hidden' }}>
+        <div style={{ background: 'var(--panel)', border: '0.5px solid var(--border)', borderRadius: 10, overflow: 'hidden', marginBottom: 16 }}>
           <div style={theadStyle}>
-            <span>Sessão</span>
-            <span>Início</span>
-            <span>Último evento</span>
-            <span style={{ textAlign: 'right' }}>Ações</span>
+            <span>HWID</span>
+            <span>Hash SHA-256</span>
+            <span>Registrado</span>
+            <span style={{ textAlign: 'right' }}>Ação</span>
           </div>
 
           {loading && (
-            <div style={{ padding: '20px 16px', display: 'flex', flexDirection: 'column', gap: 14 }}>
-              {[1,2,3].map(i => (
-                <div key={i} style={{ display: 'grid', gridTemplateColumns: '110px 1fr 1fr 160px', gap: 12, opacity: 1 - i * 0.28 }}>
-                  {[80, 130, 130, 90].map((w, j) => (
-                    <div key={j} style={{
-                      height: 11, borderRadius: 4,
-                      background: 'var(--border)', width: w,
-                      animation: `blink ${1 + j * 0.15}s ease infinite`,
-                    }} />
-                  ))}
-                </div>
-              ))}
+            <div style={{ padding: 24, color: 'var(--muted)', textAlign: 'center' }}>Carregando...</div>
+          )}
+
+          {!loading && records.length === 0 && (
+            <div style={{ padding: 24, color: 'var(--muted)', textAlign: 'center' }}>
+              Nenhum HWID registrado ainda.
             </div>
           )}
 
-          {!loading && sessions.length === 0 && (
-            <div style={emptyStyle}>
-              <div style={{ display: 'flex', justifyContent: 'center', gap: 6, marginBottom: 10 }}>
-                {[0,1,2].map(i => (
-                  <span key={i} style={{
-                    display: 'inline-block', width: 7, height: 7,
-                    borderRadius: '50%', background: 'var(--muted)',
-                    animation: `pulse-dot 1.4s ease ${i * 0.22}s infinite`,
-                  }} />
-                ))}
-              </div>
-              Aguardando sessões. Inicie o GodEye nos clientes.
-            </div>
-          )}
-
-          {sessions.map((s, i) => (
-            <div
-              key={s.session}
-              className="row-in"
-              style={{
-                ...rowStyle,
-                borderBottom: i < sessions.length - 1 ? '0.5px solid var(--border)' : 'none',
-                animationDelay: `${i * 0.05}s`,
-              }}
-            >
-              <span style={{ color: 'var(--blue)', fontWeight: 700, fontFamily: 'Courier New, monospace', fontSize: 12 }}>
-                {s.session}
+          {records.map((r, i) => (
+            <div key={r.hwid} className="row-in" style={{
+              ...rowStyle,
+              borderBottom: i < records.length - 1 ? '0.5px solid var(--border)' : 'none',
+              animationDelay: `${i * 0.04}s`,
+            }}>
+              <span style={{ color: 'var(--blue)', fontFamily: 'Courier New', fontSize: 11, fontWeight: 700, wordBreak: 'break-all' }}>
+                {r.hwid}
               </span>
-              <span style={{ color: 'var(--muted)', fontSize: 12 }}>{s.started ? fmt(s.started) : '—'}</span>
-              <span style={{ color: 'var(--muted)', fontSize: 12 }}>{s.last_seen ? fmt(s.last_seen) : '—'}</span>
-
+              <span style={{ color: 'var(--muted)', fontFamily: 'Courier New', fontSize: 10, wordBreak: 'break-all' }}>
+                {r.hash.slice(0, 16)}…
+              </span>
+              <span style={{ color: 'var(--muted)', fontSize: 11 }}>
+                {r.registered ? fmt(r.registered) : '—'}
+              </span>
               <div style={{ display: 'flex', gap: 5, justifyContent: 'flex-end' }}>
-                <Link href={`/dashboard/${s.session}`} style={linkBtnStyle}>Ver →</Link>
-
-                {confirmDel === s.session ? (
+                {confirm === r.hwid ? (
                   <>
                     <button
-                      onClick={() => deleteSession(s.session)}
-                      disabled={deleting === s.session}
-                      style={deleteBtnConfirmStyle}
+                      onClick={() => resetHash(r.hwid)}
+                      disabled={resetting === r.hwid}
+                      style={confirmBtnStyle}
                     >
-                      {deleting === s.session
+                      {resetting === r.hwid
                         ? <span className="spin" style={{ fontSize: 11 }}>↻</span>
-                        : 'Confirmar'}
+                        : 'Confirmar reset'}
                     </button>
-                    <button onClick={() => setConfirmDel(null)} style={cancelBtnStyle}>✕</button>
+                    <button onClick={() => setConfirm(null)} style={cancelBtnStyle}>✕</button>
                   </>
                 ) : (
-                  <button onClick={() => setConfirmDel(s.session)} style={deleteBtnStyle}>
-                    Deletar
+                  <button onClick={() => setConfirm(r.hwid)} style={resetBtnStyle}>
+                    Resetar hash
                   </button>
                 )}
               </div>
             </div>
           ))}
+        </div>
+
+        <div style={{ background: 'var(--panel)', border: '0.5px solid var(--border)', borderRadius: 10, padding: '14px 18px' }}>
+          <div style={{ fontSize: 11, color: 'var(--blue)', fontWeight: 700, marginBottom: 8 }}>
+            Como funciona
+          </div>
+          <div style={{ fontSize: 12, color: 'var(--muted)', lineHeight: 1.7 }}>
+            Na primeira execução do GodEyeV4.exe em uma máquina, o SHA-256 do executável é registrado aqui vinculado ao HWID do usuário.
+            Nas execuções seguintes, o hash calculado é comparado com o registrado — se divergir, uma notificação é enviada ao Discord e o programa é encerrado.
+            <br /><br />
+            Para distribuir uma atualização do GodEyeV4.exe, clique em <strong>Resetar hash</strong> para o HWID desejado.
+            Na próxima execução, o novo hash será registrado automaticamente.
+          </div>
         </div>
       </div>
     </>
@@ -188,36 +154,26 @@ export default function DashboardPage() {
 
 const btnStyle: React.CSSProperties = {
   background: 'var(--panel)', border: '0.5px solid var(--border)',
-  borderRadius: 6, color: 'var(--muted)', padding: '7px 14px', fontSize: 12,
-  cursor: 'pointer',
+  borderRadius: 6, color: 'var(--muted)', padding: '7px 14px', fontSize: 12, cursor: 'pointer',
 }
 const theadStyle: React.CSSProperties = {
-  display: 'grid', gridTemplateColumns: '110px 1fr 1fr 160px',
+  display: 'grid', gridTemplateColumns: '1fr 140px 160px 140px',
   padding: '10px 16px', borderBottom: '0.5px solid var(--border)',
   fontSize: 10, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '.05em',
 }
 const rowStyle: React.CSSProperties = {
-  display: 'grid', gridTemplateColumns: '110px 1fr 1fr 160px',
-  padding: '11px 16px', alignItems: 'center',
+  display: 'grid', gridTemplateColumns: '1fr 140px 160px 140px',
+  padding: '11px 16px', alignItems: 'center', gap: 8,
 }
-const emptyStyle: React.CSSProperties = {
-  padding: '32px 24px', color: 'var(--muted)', textAlign: 'center', fontSize: 13,
-}
-const linkBtnStyle: React.CSSProperties = {
-  display: 'inline-flex', alignItems: 'center', padding: '4px 10px',
-  background: '#1e3a5f', border: '0.5px solid var(--blue)',
-  borderRadius: 5, color: 'var(--blue)', fontSize: 11, fontWeight: 700,
-  textDecoration: 'none',
-}
-const deleteBtnStyle: React.CSSProperties = {
+const resetBtnStyle: React.CSSProperties = {
   padding: '4px 10px', fontSize: 11, fontWeight: 700, cursor: 'pointer',
-  background: 'rgba(232,69,69,.08)', border: '0.5px solid rgba(232,69,69,.35)',
-  borderRadius: 5, color: 'var(--red)',
+  background: 'rgba(245,166,35,.08)', border: '0.5px solid rgba(245,166,35,.35)',
+  borderRadius: 5, color: 'var(--amber)',
 }
-const deleteBtnConfirmStyle: React.CSSProperties = {
+const confirmBtnStyle: React.CSSProperties = {
   padding: '4px 10px', fontSize: 11, fontWeight: 700, cursor: 'pointer',
   background: 'rgba(232,69,69,.2)', border: '0.5px solid var(--red)',
-  borderRadius: 5, color: 'var(--red)', minWidth: 76,
+  borderRadius: 5, color: 'var(--red)', minWidth: 110,
   display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
 }
 const cancelBtnStyle: React.CSSProperties = {
